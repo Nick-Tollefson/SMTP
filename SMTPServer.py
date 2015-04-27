@@ -8,9 +8,13 @@ s.listen(1)
 users = ["Peter", "Nick", "Tyler", "Kyle"]
 lock = threading.Lock()
 
+
+print "----SERVER ONLINE----"
+
+
 def SMTPServer(connection, address):
 
-    lock.acquire()
+    #lock.acquire()
 
     connection.sendall("220 " + str(socket.getfqdn()) + " ESMTP Postfix")
 
@@ -39,8 +43,8 @@ def SMTPServer(connection, address):
         connection.sendall("500 Command Syntax Error")
 
     mailTo = connection.recv(1024)
-    global checkMailTo
     checkMailTo = mailTo.split("@")
+
 
     try:
 
@@ -62,7 +66,7 @@ def SMTPServer(connection, address):
 
 
     done = False
-    global contentOfMail
+    #global contentOfMail
     contentOfMail = []
     i = 1
 
@@ -81,7 +85,7 @@ def SMTPServer(connection, address):
 
                 connection.sendall("221 Bye")
                 connection.close()
-                lock.release()
+                #lock.release()
 
             done = True
 
@@ -98,19 +102,21 @@ def SMTPServer(connection, address):
 
         i += 1
 
-def MailMan():
+    threading.Thread(target = MailMan, args = (checkMailTo, contentOfMail)).start()
+def MailMan(checkMailTo,contentOfMail):
 
-    lock.acquire()
+    #lock.acquire()
 
-    if(checkMailTo[0] in users):
+    if(checkMailTo[0] not in users):
+        conn.sendall("666 ERROR")
+        return "666 ERROR"
+    save_path = os.getcwd() + "\\" + checkMailTo[0]
 
-        save_path = os.getcwd() + "\\" + checkMailTo[0]
+    completeName = os.path.join(save_path, "test.txt")
 
-        completeName = os.path.join(save_path, "test.txt")
+    writingMessage = open(completeName, "w")
 
-        writingMessage = open(completeName, "w")
-
-    global contentOfMail
+    #global contentOfMail
     for eachLine in contentOfMail:
 
         writingMessage.write(eachLine)
@@ -118,7 +124,7 @@ def MailMan():
 
     writingMessage.close()
     contentOfMail[:] = []
-    lock.release()
+    #lock.release()
 
 
 #--------------------------------------------------------------------
@@ -130,5 +136,6 @@ while (not finished):
     conn, addr = s.accept()
     print str(addr) + " has connected"
     threading.Thread(target = SMTPServer, args = (conn, addr)).start()
-    threading.Thread(target = MailMan).start()
+
+
 
