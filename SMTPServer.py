@@ -32,13 +32,11 @@ def SMTPServer(connection, address):
     try:
 
         socket.gethostbyname(checkMailFrom[1])
+        connection.sendall("250 OK")
 
     except socket.gaierror:
 
         connection.sendall("500 Command Syntax Error")
-
-    connection.sendall("250 OK")
-
 
     mailTo = connection.recv(1024)
     global checkMailTo
@@ -47,16 +45,11 @@ def SMTPServer(connection, address):
     try:
 
         socket.gethostbyname(checkMailTo[1])
+        connection.sendall("250 OK")
 
     except socket.gaierror:
 
         connection.sendall("500 Command Syntax Error")
-
-
-    connection.sendall("250 OK")
-
-
-
 
     confirmMailStart = connection.recv(1024)
     if(confirmMailStart == "DATA"):
