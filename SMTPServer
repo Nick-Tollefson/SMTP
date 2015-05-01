@@ -1,0 +1,153 @@
+import socket, os, threading
+
+HOST = ''
+PORT = 33333
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((HOST,PORT))
+s.listen(1)
+users = ["Peter", "Nick", "Tyler", "Kyle"]
+lock = threading.Lock()
+
+
+print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
+
+
+def SMTPServer(connection, address):
+
+
+    connection.sendall("220 " + str(socket.getfqdn()) + " ESMTP Postfix")
+
+
+
+    userInfo = connection.recv(1024)
+    clientHello = userInfo.split(" ")
+
+    if(clientHello[0] == "HELO"):
+
+        connection.sendall("250 Hello " + clientHello[1] + ", I am glad to meet you")
+
+    else:
+
+        connection.sendall("500 Command Syntax Error")
+
+
+
+    mailFrom = connection.recv(1024)
+    gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
+    checkMailFrom = gettingFromAddr.split("@")
+
+    try:
+
+        socket.gethostbyname(checkMailFrom[1])
+
+    except socket.gaierror:
+
+        connection.sendall("500 Command Syntax Error")
+        connection.close()
+        return None
+
+    connection.sendall("250 OK")
+
+
+
+    mailTo = connection.recv(1024)
+    gettingToAddr = mailTo[mailTo.find("<") + 1:mailTo.find(">")]
+    checkMailTo = gettingToAddr.split("@")
+
+    try:
+
+        socket.gethostbyname(checkMailTo[1])
+
+    except socket.gaierror:
+
+        connection.sendall("500 Command Syntax Error")
+        connection.close()
+
+
+    connection.sendall("250 OK")
+
+
+
+    confirmMailStart = connection.recv(1024)
+    if(confirmMailStart == "DATA"):
+
+        connection.sendall("354 End data with <CR><LF>.<CR><LF>")
+
+    else:
+
+        connection.sendall("500 Command Syntax Error")
+
+
+
+    done = False
+    contentOfMail = []
+
+    while(not done):
+
+        nextLine = connection.recv(1024)
+
+        if(nextLine == "."):
+
+            connection.sendall("250 Ok: queued as 12345")
+
+            ending = connection.recv(1024)
+            if(ending == "QUIT"):
+
+                connection.sendall("221 Bye")
+                connection.close()
+
+            done = True
+
+        else:
+
+            contentOfMail.append(nextLine + "\n")
+
+
+    threading.Thread(target = MailMan, args = (checkMailTo, contentOfMail)).start()
+
+
+
+def MailMan(checkMailTo,contentOfMail):
+
+    if(checkMailTo[0] not in users):
+
+        #---------------------------------------------
+        #NEW STUFF HERE FOR RELAY(?)
+        #conn.sendall("666 ERROR")
+        #return "666 ERROR"
+
+        save_path = os.getcwd() + "\\" + "Other"
+
+        completeName = os.path.join(save_path, "test.txt")
+
+        writingMessage = open(completeName, "w")
+
+        for eachLine in contentOfMail:
+
+            writingMessage.write(eachLine)
+        #---------------------------------------------
+    else:
+        
+        save_path = os.getcwd() + "\\" + checkMailTo[0]
+
+        completeName = os.path.join(save_path, "test.txt")
+
+        writingMessage = open(completeName, "w")
+
+        for eachLine in contentOfMail:
+
+            writingMessage.write(eachLine)
+
+
+    writingMessage.close()
+    contentOfMail[:] = []
+
+#--------------------------------------------------------------------------------------------------------------------
+
+finished = False
+
+while (not finished):
+
+    conn, addr = s.accept()
+    print str(addr[0]) + ":" + str(addr[1]) + " has connected"
+    threading.Thread(target = SMTPServer, args = (conn, addr)).start()
