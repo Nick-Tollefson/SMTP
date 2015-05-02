@@ -1,16 +1,14 @@
 import socket, os, threading
 
-
 print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
 
 def SMTPServer(connection, address):
-    
+
     #added for the groups, this is the first message before the server sends its openning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            message
     user = connection.recv(1024)
     print "logged in as " + user
 
     connection.sendall("220 " + str(socket.getfqdn()) + " ESMTP Postfix")
-
 
 
     userInfo = connection.recv(1024)
@@ -33,6 +31,7 @@ def SMTPServer(connection, address):
     try:
 
         socket.gethostbyname(checkMailFrom[1])
+        print checkMailFrom[1]
 
     except socket.gaierror:
 
@@ -89,6 +88,7 @@ def SMTPServer(connection, address):
 
                 connection.sendall("221 Bye")
                 connection.close()
+                print "message transaction complete"
 
             done = True
 
@@ -103,8 +103,10 @@ def SMTPServer(connection, address):
 
 def MailMan(checkMailTo,contentOfMail):
 
-    if(checkMailTo[0] not in users):
+    #change this to check To server vs current running server
+    if(socket.gethostbyname(checkMailTo[1]) != socket.gethostbyname(socket.gethostname())):
 
+        print "it made it here"
         #---------------------------------------------
         #NEW STUFF HERE FOR RELAY(?)
         #conn.sendall("666 ERROR")
@@ -119,9 +121,11 @@ def MailMan(checkMailTo,contentOfMail):
         for eachLine in contentOfMail:
 
             writingMessage.write(eachLine)
-        #---------------------------------------------
+
+
+
     else:
-        
+
         save_path = os.getcwd() + "\\" + checkMailTo[0]
 
         completeName = os.path.join(save_path, "test.txt")
@@ -174,10 +178,9 @@ def serverConnection():
 
     while (not finished):
 
-        relayconn, relayaddr = relay.accept()
-        print relayaddr
-        print str(relayconn[0]) + ":" + str(relayaddr[1]) + " has connected (this is a server)"
-        threading.Thread(target = SMTPServer, args = (relayconn, relayaddr)).start()
+        conn, addr = relay.accept()
+        print str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a server)"
+        threading.Thread(target = SMTPServer, args = (conn, addr)).start()
 
 
 
