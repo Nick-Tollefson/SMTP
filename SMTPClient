@@ -41,7 +41,8 @@ class SMTP:
         self.s = s
         self.s.connect((HOST, PORT))
 
-
+        #start with a username
+        s.sendall(self.clientName)
 
         serverHello = self.s.recv(1024)
         checkServerHello = serverHello.split(" ")
