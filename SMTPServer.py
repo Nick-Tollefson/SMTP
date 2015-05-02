@@ -23,7 +23,7 @@ def SMTPServer(connection, address):
         connection.sendall("500 Command Syntax Error")
 
 
-
+    #need this for relay
     mailFrom = connection.recv(1024)
     gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
     checkMailFrom = gettingFromAddr.split("@")
@@ -42,7 +42,7 @@ def SMTPServer(connection, address):
     connection.sendall("250 OK")
 
 
-
+    #need this for relay
     mailTo = connection.recv(1024)
     gettingToAddr = mailTo[mailTo.find("<") + 1:mailTo.find(">")]
     checkMailTo = gettingToAddr.split("@")
@@ -97,16 +97,14 @@ def SMTPServer(connection, address):
             contentOfMail.append(nextLine + "\n")
 
 
-    threading.Thread(target = MailMan, args = (checkMailTo, contentOfMail)).start()
+    threading.Thread(target = MailMan, args = (mailFrom, mailTo, checkMailTo, contentOfMail)).start()
 
 
 
-def MailMan(checkMailTo,contentOfMail):
+def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
     #change this to check To server vs current running server
     if(socket.gethostbyname(checkMailTo[1]) != socket.gethostbyname(socket.gethostname())):
-
-        print "it made it here"
 
         save_path = os.getcwd() + "\\" + "Other"
 
@@ -120,20 +118,6 @@ def MailMan(checkMailTo,contentOfMail):
 
 
 
-    else:
-
-        save_path = os.getcwd() + "\\" + checkMailTo[0]
-
-        completeName = os.path.join(save_path, str(calendar.timegm(time.gmtime())) + ".txt")
-
-        writingMessage = open(completeName, "w")
-
-        for eachLine in contentOfMail:
-
-            writingMessage.write(eachLine)
-
-
-        """
         HOST = socket.gethostbyname(checkMailTo[1])
         PORT = 44444
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -177,8 +161,8 @@ def MailMan(checkMailTo,contentOfMail):
 
 
 
-        s.sendall("MAIL FROM:<" + messageSource + ">")
-        print "C: MAIL FROM:<" + messageSource + ">"
+        s.sendall(mailFrom)
+        print "C: " + mailFrom
         mailFromOk = s.recv(1024)
         checkMailFromOk = mailFromOk.split(" ")
 
@@ -194,8 +178,8 @@ def MailMan(checkMailTo,contentOfMail):
 
 
 
-        s.sendall("RCPT TO:<" + messageDestination + ">")
-        print "C: RCPT TO:<" + messageDestination + ">"
+        s.sendall(mailTo)
+        print "C: " + mailTo
         mailToOk = s.recv(1024)
         checkMailToOk = mailToOk.split(" ")
 
@@ -227,33 +211,7 @@ def MailMan(checkMailTo,contentOfMail):
             return None
 
 
-
-        s.sendall('From: "' + clientName + '" <' + messageSource + ">")
-        print 'C: From: "' + clientName + '" <' + messageSource + ">"
-        time.sleep(0.5)
-
-
-
-        name = messageDestination.split("@")
-        s.sendall('To: "' + name[0] + '" <' + messageDestination + ">")
-        print 'C: To: "' + name[0] + '" <' + messageDestination + ">"
-        time.sleep(0.5)
-
-
-
-        s.sendall("Date: " + str(time.strftime("%a, %d %b %Y %X")))
-        print "C: Date: " + str(time.strftime("%a, %d %b %Y %X"))
-        time.sleep(0.5)
-
-
-
-        s.sendall("Subject: " + messageSubject + "\n")
-        print "C: Subject: " + messageSubject
-        time.sleep(0.5)
-
-
-
-        for eachLine in messageBodyList:
+        for eachLine in contentOfMail:
 
             s.sendall(eachLine)
             time.sleep(0.5)
@@ -281,7 +239,6 @@ def MailMan(checkMailTo,contentOfMail):
         print "C: QUIT"
 
 
-
         byeBye = s.recv(1024)
         checkByeBye = byeBye.split(" ")
 
@@ -293,9 +250,23 @@ def MailMan(checkMailTo,contentOfMail):
         else:
 
             print "S: " + byeBye
-            .s.close()
+            s.close()
 
-        """
+
+
+
+    else:
+
+        save_path = os.getcwd() + "\\" + checkMailTo[0]
+
+        completeName = os.path.join(save_path, str(calendar.timegm(time.gmtime())) + ".txt")
+
+        writingMessage = open(completeName, "w")
+
+        for eachLine in contentOfMail:
+
+            writingMessage.write(eachLine)
+
 
     writingMessage.close()
     contentOfMail[:] = []
@@ -347,3 +318,25 @@ def serverConnection():
 
 threading.Thread(target = clientConnection).start()
 threading.Thread(target = serverConnection).start()
+
+
+"""
+HOST = ''
+PORT = 33333
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((HOST,PORT))
+s.listen(1)
+users = ["Peter", "Nick", "Tyler", "Kyle"]
+lock = threading.Lock()
+
+print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
+
+finished = False
+
+while (not finished):
+
+    conn, addr = s.accept()
+    print addr
+    print str(addr[0]) + ":" + str(addr[1]) + " has connected"
+    threading.Thread(target = SMTPServer, args = (conn, addr)).start()
+"""
