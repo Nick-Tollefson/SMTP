@@ -1,16 +1,7 @@
 import socket, os, threading
 
-HOST = ''
-PORT = 33333
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((HOST,PORT))
-s.listen(1)
-users = ["Peter", "Nick", "Tyler", "Kyle"]
-lock = threading.Lock()
-
 
 print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
-
 
 def SMTPServer(connection, address):
     
@@ -147,10 +138,49 @@ def MailMan(checkMailTo,contentOfMail):
 
 #--------------------------------------------------------------------------------------------------------------------
 
-finished = False
+def clientConnection():
 
-while (not finished):
+    print "client socket started"
+    HOST = ''
+    PORT = 33333
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST,PORT))
+    s.listen(1)
+    global users
+    users = ["Peter", "Nick", "Tyler", "Kyle"]
 
-    conn, addr = s.accept()
-    print str(addr[0]) + ":" + str(addr[1]) + " has connected"
-    threading.Thread(target = SMTPServer, args = (conn, addr)).start()
+    finished = False
+
+    while (not finished):
+
+        conn, addr = s.accept()
+        print addr
+        print str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a client)"
+        threading.Thread(target = SMTPServer, args = (conn, addr)).start()
+
+
+def serverConnection():
+
+    print "relay socket started"
+    HOST = ''
+    PORT = 44444
+    relay = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    relay.bind((HOST,PORT))
+    relay.listen(1)
+    global users
+    users = ["Peter", "Nick", "Tyler", "Kyle"]
+
+    finished = False
+
+    while (not finished):
+
+        relayconn, relayaddr = relay.accept()
+        print relayaddr
+        print str(relayconn[0]) + ":" + str(relayaddr[1]) + " has connected (this is a server)"
+        threading.Thread(target = SMTPServer, args = (relayconn, relayaddr)).start()
+
+
+
+
+threading.Thread(target = clientConnection).start()
+threading.Thread(target = serverConnection).start()
