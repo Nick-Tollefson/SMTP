@@ -133,6 +133,170 @@ def MailMan(checkMailTo,contentOfMail):
             writingMessage.write(eachLine)
 
 
+        """
+        HOST = socket.gethostbyname(checkMailTo[1])
+        PORT = 44444
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s = s
+        s.connect((HOST, PORT))
+
+        #start with a username
+        s.sendall(socket.gethostname())
+
+        serverHello = s.recv(1024)
+        checkServerHello = serverHello.split(" ")
+
+        if(checkServerHello[0] == "220"):
+
+            print "S: " + serverHello
+
+        else:
+
+            print "S: " + serverHello
+            s.close()
+            return None
+
+
+
+        s.sendall("HELO " + socket.getfqdn())
+        print "C: HELO " + socket.getfqdn()
+
+
+        serverConfirm = s.recv(1024)
+        checkServerConfirm = serverConfirm.split(" ")
+
+        if(checkServerConfirm[0] == "250"):
+
+            print "S: " + serverConfirm
+
+        else:
+
+            print "S: " + serverConfirm
+            s.close()
+            return None
+
+
+
+        s.sendall("MAIL FROM:<" + messageSource + ">")
+        print "C: MAIL FROM:<" + messageSource + ">"
+        mailFromOk = s.recv(1024)
+        checkMailFromOk = mailFromOk.split(" ")
+
+        if(checkMailFromOk[0] == "250"):
+
+            print "S: " + mailFromOk
+
+        else:
+
+            print "S: " + mailFromOk
+            s.close()
+            return None
+
+
+
+        s.sendall("RCPT TO:<" + messageDestination + ">")
+        print "C: RCPT TO:<" + messageDestination + ">"
+        mailToOk = s.recv(1024)
+        checkMailToOk = mailToOk.split(" ")
+
+        if(checkMailToOk[0] == "250"):
+
+            print "S: " + mailToOk
+
+        else:
+
+            print "S: " + mailToOk
+            s.close()
+            return None
+
+
+
+        s.sendall("DATA")
+        print "C: DATA"
+        readyForData = s.recv(1024)
+        checkReadyForData = readyForData.split(" ")
+
+        if(checkReadyForData[0] == "354"):
+
+            print "S: " + readyForData
+
+        else:
+
+            print "S: " + readyForData
+            s.close()
+            return None
+
+
+
+        s.sendall('From: "' + clientName + '" <' + messageSource + ">")
+        print 'C: From: "' + clientName + '" <' + messageSource + ">"
+        time.sleep(0.5)
+
+
+
+        name = messageDestination.split("@")
+        s.sendall('To: "' + name[0] + '" <' + messageDestination + ">")
+        print 'C: To: "' + name[0] + '" <' + messageDestination + ">"
+        time.sleep(0.5)
+
+
+
+        s.sendall("Date: " + str(time.strftime("%a, %d %b %Y %X")))
+        print "C: Date: " + str(time.strftime("%a, %d %b %Y %X"))
+        time.sleep(0.5)
+
+
+
+        s.sendall("Subject: " + messageSubject + "\n")
+        print "C: Subject: " + messageSubject
+        time.sleep(0.5)
+
+
+
+        for eachLine in messageBodyList:
+
+            s.sendall(eachLine)
+            time.sleep(0.5)
+            print "C: " + eachLine
+
+
+
+        s.sendall(".")
+        endOfMessage = s.recv(1024)
+        checkEndOfMessage = endOfMessage.split(" ")
+
+        if(checkEndOfMessage[0] == "250"):
+
+            print "S: " + endOfMessage
+
+        else:
+
+            print "S: " + endOfMessage
+            s.close()
+            return None
+
+
+
+        s.sendall("QUIT")
+        print "C: QUIT"
+
+
+
+        byeBye = s.recv(1024)
+        checkByeBye = byeBye.split(" ")
+
+        if(checkByeBye[0] == "221"):
+
+            print "S: " + byeBye
+            s.close()
+
+        else:
+
+            print "S: " + byeBye
+            .s.close()
+
+        """
+
     writingMessage.close()
     contentOfMail[:] = []
 
