@@ -13,7 +13,10 @@ print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
 
 
 def SMTPServer(connection, address):
-
+    
+    #added for the groups, this is the first message before the server sends its openning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            message
+    user = connection.recv(1024)
+    print "logged in as " + user
 
     connection.sendall("220 " + str(socket.getfqdn()) + " ESMTP Postfix")
 
