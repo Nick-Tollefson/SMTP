@@ -277,14 +277,9 @@ def clicked():
 
     test = SMTP(serverID, username)
 
-    if(test.isAllowed()):
+    loginWindow.destroy()
+    sendingMessage(test)
 
-        loginWindow.destroy()
-        sendingMessage(test)
-
-    else:
-
-        print "error"
 
 loginWindow = Tk()
 loginWindow.title("Login")
