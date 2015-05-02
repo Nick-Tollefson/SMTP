@@ -1,4 +1,4 @@
-import socket, os, threading
+import socket, os, threading, time
 
 print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
 
@@ -114,7 +114,7 @@ def MailMan(checkMailTo,contentOfMail):
 
         save_path = os.getcwd() + "\\" + "Other"
 
-        completeName = os.path.join(save_path, "test.txt")
+        completeName = os.path.join(save_path, time.strtime("%M, %S") + ".txt")
 
         writingMessage = open(completeName, "w")
 
