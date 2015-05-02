@@ -1,4 +1,4 @@
-import socket, os, threading, time
+import socket, os, threading, time, calendar
 
 print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
 
@@ -107,14 +107,10 @@ def MailMan(checkMailTo,contentOfMail):
     if(socket.gethostbyname(checkMailTo[1]) != socket.gethostbyname(socket.gethostname())):
 
         print "it made it here"
-        #---------------------------------------------
-        #NEW STUFF HERE FOR RELAY(?)
-        #conn.sendall("666 ERROR")
-        #return "666 ERROR"
 
         save_path = os.getcwd() + "\\" + "Other"
 
-        completeName = os.path.join(save_path, time.strtime("%M, %S") + ".txt")
+        completeName = os.path.join(save_path, str(calendar.timegm(time.gmtime())) + ".txt")
 
         writingMessage = open(completeName, "w")
 
@@ -128,7 +124,7 @@ def MailMan(checkMailTo,contentOfMail):
 
         save_path = os.getcwd() + "\\" + checkMailTo[0]
 
-        completeName = os.path.join(save_path, "test.txt")
+        completeName = os.path.join(save_path, str(calendar.timegm(time.gmtime())) + ".txt")
 
         writingMessage = open(completeName, "w")
 
