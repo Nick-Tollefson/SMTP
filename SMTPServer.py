@@ -26,6 +26,8 @@ def SMTPServer(connection, address):
     #need this for relay
     mailFrom = connection.recv(1024)
     gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
+    print mailFrom
+    print gettingFromAddr
     checkMailFrom = gettingFromAddr.split("@")
 
     try:
@@ -45,6 +47,8 @@ def SMTPServer(connection, address):
     #need this for relay
     mailTo = connection.recv(1024)
     gettingToAddr = mailTo[mailTo.find("<") + 1:mailTo.find(">")]
+    print mailTo
+    print gettingToAddr
     checkMailTo = gettingToAddr.split("@")
 
     try:
@@ -78,6 +82,7 @@ def SMTPServer(connection, address):
     while(not done):
 
         nextLine = connection.recv(1024)
+        print nextLine
 
         if(nextLine == "."):
 
