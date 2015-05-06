@@ -125,6 +125,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
             writingMessage.write(eachLine)
 
 
+        print "***RELAY CONNECTION BELOW***"
 
         HOST = socket.gethostbyname(checkMailTo[1])
         PORT = 44444
@@ -133,7 +134,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
         s.connect((HOST, PORT))
 
         #start with a username
-        s.sendall(socket.gethostname())
+        #s.sendall(socket.gethostname())
 
         serverHello = s.recv(1024)
         checkServerHello = serverHello.split(" ")
@@ -180,7 +181,8 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
         else:
 
-            print "S: " + mailFromOk
+
+            print "S: " + mailFromOk + " (it failed at line 184)"
             s.close()
             return None
 
