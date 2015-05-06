@@ -24,7 +24,7 @@ def SMTPServer(connection, address, checkingClient):
     else:
 
         connection.sendall("500 Command Syntax Error")
-
+#PUSHHHH
 
     #need this for relay
     mailFrom = connection.recv(1024)
