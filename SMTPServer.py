@@ -2,11 +2,14 @@ import socket, os, threading, time, calendar
 
 print "----SERVER ONLINE AT: " + socket.getfqdn() + "----"
 
-def SMTPServer(connection, address):
+def SMTPServer(connection, address, checkingClient):
 
-    #added for the groups, this is the first message before the server sends its openning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            message
-    user = connection.recv(1024)
-    print "logged in as " + user
+    #added for the groups, this is the first message before the server sends its openning
+
+    if(checkingClient == True):
+
+        user = connection.recv(1024)
+        print "logged in as " + user
 
     connection.sendall("220 " + str(socket.getfqdn()) + " ESMTP Postfix")
 
@@ -281,6 +284,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 def clientConnection():
 
     print "client socket started"
+    isClient = True
     HOST = ''
     PORT = 33333
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -296,12 +300,13 @@ def clientConnection():
         conn, addr = s.accept()
         print addr
         print str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a client)"
-        threading.Thread(target = SMTPServer, args = (conn, addr)).start()
+        threading.Thread(target = SMTPServer, args = (conn, addr, isClient)).start()
 
 
 def serverConnection():
 
     print "relay socket started"
+    isClient = False
     HOST = ''
     PORT = 44444
     relay = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -316,7 +321,7 @@ def serverConnection():
 
         conn, addr = relay.accept()
         print str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a server)"
-        threading.Thread(target = SMTPServer, args = (conn, addr)).start()
+        threading.Thread(target = SMTPServer, args = (conn, addr, isClient)).start()
 
 
 
