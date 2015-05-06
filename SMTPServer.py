@@ -17,14 +17,20 @@ def SMTPServer(connection, address, checkingClient):
     userInfo = connection.recv(1024)
     clientHello = userInfo.split(" ")
 
-    if(clientHello[0] == "HELO"):
+    if(len(clientHello) == 1):
 
-        connection.sendall("250 Hello " + clientHello[1] + ", I am glad to meet you")
+        connection.sendall("250 Hello " + clientHello[0] + ", I am glad to meet you")
 
     else:
 
-        connection.sendall("500 Command Syntax Error")
-#PUSHHHH
+        if(clientHello[0] == "HELO"):
+
+            connection.sendall("250 Hello " + clientHello[1] + ", I am glad to meet you")
+
+        else:
+
+            connection.sendall("500 Command Syntax Error")
+
 
     #need this for relay
     mailFrom = connection.recv(1024)
