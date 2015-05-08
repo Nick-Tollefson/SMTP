@@ -254,7 +254,30 @@ def sendingMessage(SMTP):
     message.mainloop()
 
 #--------------------------------------------------------------------------------------------------------------------
+def encryption(line, off_set=1):
+    new_string = ""
+    for word in line.split(" "):
+        for letters in word:
+            if ord(letters) - 32 + off_set >= 95:
+                new_string += chr(ord(letters) + off_set - 127)
+            else:
+                new_string += chr(ord(letters) + off_set - 32)
+        new_string += " "
+    new_string = new_string[:len(new_string) - 1]
+    return new_string
 
+def decryption(line, off_set=1):
+    new_string = ""
+    for word in line.split(" "):
+        for letters in word:
+            if 0 < ord(letters) - 32 - off_set:
+                new_string += chr(ord(letters) - off_set)
+            else:
+                new_string += chr(ord(letters) - off_set + 127)
+        new_string += " "
+    new_string = new_string[:len(new_string) - 1]
+    return new_string
+#--------------------------------------------------------------------------------------------------------------------
 def clicked():
 
     global username
