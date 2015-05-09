@@ -28,6 +28,8 @@ class SMTP:
 
         s.sendall(self.clientName)
 
+        """
+        THE ORIGONAL METHOD:
 
         serverHello = self.s.recv(1024)
         checkServerHello = serverHello.split(" ")
@@ -41,7 +43,24 @@ class SMTP:
             print "S: " + serverHello
             self.s.close()
             return None
+        """
 
+
+        done = False
+
+        while(not done):
+
+            InboxOr220 = self.s.recv(1024)
+
+            if(InboxOr220[:3] == "220"):
+
+                print "S: " + InboxOr220
+                print "got the 220"
+                done = True
+
+            else:
+
+                print InboxOr220
 
     def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
 
