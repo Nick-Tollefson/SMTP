@@ -29,7 +29,7 @@ class SMTP:
         s.sendall(self.clientName)
 
         """
-        THE ORIGONAL METHOD:
+        THE ORIGINAL METHOD:
         serverHello = self.s.recv(1024)
         checkServerHello = serverHello.split(" ")
         if(checkServerHello[0] == "220"):
