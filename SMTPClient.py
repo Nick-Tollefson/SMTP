@@ -49,6 +49,7 @@ class SMTP:
             else:
 
                 message = ast.literal_eval(InboxOr220)
+                print message
                 print "+++++++++++++++++++++++++++++++++++++++"
                 print "--- From: " + message[2] + " | To: " + message[1] + " | Subject: " + message[3] + \
                       " | Date: " + message[0] + " ---"

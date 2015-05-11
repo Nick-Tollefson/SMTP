@@ -1,4 +1,5 @@
 import socket, os, threading, time, calendar
+#decrypt subject and body
 
 print "----SMTP SERVER ONLINE | FQDN: " + socket.getfqdn() + "----"
 
@@ -86,6 +87,7 @@ def SMTPServer(connection, address, checkingClient):
     gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
     message[2] = str(gettingFromAddr)
     checkMailFrom = gettingFromAddr.split("@")
+    print checkMailFrom
 
     try:
 
@@ -165,6 +167,9 @@ def SMTPServer(connection, address, checkingClient):
                 #new - make sure to strip right newlines as they come in on client!
                 message[4] = messageBody
 
+            else:
+
+                connection.sendall("500")
 
             done = True
 
