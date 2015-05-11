@@ -17,22 +17,7 @@ class SMTP:
         self.clientName = clientName
 
 
-
-    def isAllowed(self):
-
-        users = ["Peter", "Nick", "Tyler", "Kyle"]
-
-        if(self.clientName in users):
-
-            return True
-
-        else:
-
-            return False
-
-
-
-    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
+    def logIntoServerAndReceiveInbox(self):
 
 
         HOST = socket.gethostbyname(self.serverName)
@@ -41,22 +26,38 @@ class SMTP:
         self.s = s
         self.s.connect((HOST, PORT))
 
-        #start with a username
         s.sendall(self.clientName)
 
+        """
+        THE ORIGONAL METHOD:
         serverHello = self.s.recv(1024)
         checkServerHello = serverHello.split(" ")
-
         if(checkServerHello[0] == "220"):
-
             print "S: " + serverHello
-
         else:
-
             print "S: " + serverHello
             self.s.close()
             return None
+        """
 
+
+        done = False
+
+        while(not done):
+
+            InboxOr220 = self.s.recv(1024)
+
+            if(InboxOr220[:3] == "220"):
+
+                print "S: " + InboxOr220
+                print "got the 220"
+                done = True
+
+            else:
+
+                print InboxOr220
+
+    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
 
 
         self.s.sendall("HELO " + self.clientName)
@@ -198,7 +199,7 @@ class SMTP:
 
 #--------------------------------------------------------------------------------------------------------------------
 
-def sendingMessage(testing):
+def sendingMessage(SMTP):
 
     def clicked():
 
@@ -228,7 +229,7 @@ def sendingMessage(testing):
                 lineOfText += character
 
 
-        testing.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
+        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
 
 
 
@@ -267,7 +268,30 @@ def sendingMessage(testing):
     message.mainloop()
 
 #--------------------------------------------------------------------------------------------------------------------
+def encryption(line, off_set=1):
+    new_string = ""
+    for word in line.split(" "):
+        for letters in word:
+            if ord(letters) - 32 + off_set >= 95:
+                new_string += chr(ord(letters) + off_set - 127)
+            else:
+                new_string += chr(ord(letters) + off_set - 32)
+        new_string += " "
+    new_string = new_string[:len(new_string) - 1]
+    return new_string
 
+def decryption(line, off_set=1):
+    new_string = ""
+    for word in line.split(" "):
+        for letters in word:
+            if 0 < ord(letters) - 32 - off_set:
+                new_string += chr(ord(letters) - off_set)
+            else:
+                new_string += chr(ord(letters) - off_set + 127)
+        new_string += " "
+    new_string = new_string[:len(new_string) - 1]
+    return new_string
+#--------------------------------------------------------------------------------------------------------------------
 def clicked():
 
     global username
@@ -275,10 +299,11 @@ def clicked():
     serverID = serverText.get()
     username = userText.get()
 
-    test = SMTP(serverID, username)
+    SMTPconnection = SMTP(serverID, username)
+    SMTPconnection.logIntoServerAndReceiveInbox()
 
     loginWindow.destroy()
-    sendingMessage(test)
+    sendingMessage(SMTPconnection)
 
 
 loginWindow = Tk()
