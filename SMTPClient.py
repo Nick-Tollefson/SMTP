@@ -1,7 +1,14 @@
 from Tkinter import *
 import socket, time
+import ast
 
 #--------------------------------------------------------------------------------------------------------------------
+
+"""
+
+"""
+
+
 
 class SMTP:
 
@@ -28,19 +35,6 @@ class SMTP:
 
         s.sendall(self.clientName)
 
-        """
-        THE ORIGINAL METHOD:
-        serverHello = self.s.recv(1024)
-        checkServerHello = serverHello.split(" ")
-        if(checkServerHello[0] == "220"):
-            print "S: " + serverHello
-        else:
-            print "S: " + serverHello
-            self.s.close()
-            return None
-        """
-
-
         done = False
 
         while(not done):
@@ -50,12 +44,16 @@ class SMTP:
             if(InboxOr220[:3] == "220"):
 
                 print "S: " + InboxOr220
-                print "got the 220"
                 done = True
 
             else:
 
-                print InboxOr220
+                message = ast.literal_eval(InboxOr220)
+                print "+++++++++++++++++++++++++++++++++++++++"
+                print "--- From: " + message[2] + " | To: " + message[1] + " | Subject: " + message[3] + \
+                      " | Date: " + message[0] + " ---"
+                print message[4]
+                print "+++++++++++++++++++++++++++++++++++++++"
 
     def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
 
@@ -149,7 +147,7 @@ class SMTP:
 
 
 
-        self.s.sendall("Subject: " + messageSubject + "\n")
+        self.s.sendall("Subject: " + messageSubject)
         print "C: Subject: " + messageSubject
         time.sleep(0.5)
 
@@ -235,7 +233,7 @@ def sendingMessage(SMTP):
 
     def logOut():
 
-        message.destroy
+        message.destroy()
 
 
     message = Tk()

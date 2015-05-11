@@ -6,6 +6,7 @@ def SMTPServer(connection, address, checkingClient):
 
 
     users = ["Peter", "Nick", "Tyler", "Kyle"]
+    message = ["time","to","from","subject","body"]
 
     if(checkingClient == True):
 
@@ -14,22 +15,25 @@ def SMTPServer(connection, address, checkingClient):
 
         if(user in users):
 
+
             print "\n*NOTICE*: A client [" + user + "] has logged into the server\n"
 
 
+            readingInbox = open(str(user) + "-inbox.txt", "r")
 
+            for eachLine in readingInbox:
 
-            """
-            THIS IS WHERE THE MESSAGE INBOX THING GOES! SENDING LISTS OF THE DATA
-            """
+                #fucking sleeping fixes everything guys
+                connection.sendall(str(eachLine.strip()))
+                time.sleep(0.5)
 
-
-
+            readingInbox.close()
 
         else:
 
-            connection.sendall("ERROR, INCORRECT LOGIN")
-            print "S: ERROR, INCORECCT LOGIN"
+
+            connection.sendall("535 Authentication Cred. Invalid")
+            print "S: 535 Authentication Cred. Invalid"
             connection.close()
             return None
 
@@ -38,12 +42,12 @@ def SMTPServer(connection, address, checkingClient):
         print "*\nNOTICE*: a relay server has logged into the server\n"
 
 
-
     connection.sendall("220 " + str(socket.getfqdn()) + " ESMTP Postfix")
     print "S: " + "220 " + str(socket.getfqdn()) + " ESMTP Postfix"
 
 
     userInfo = connection.recv(1024)
+    message[0] = str(time.strftime("%a, %d %b %Y %X"))
     print "C: " + userInfo
     clientHello = userInfo.split(" ")
 
@@ -80,6 +84,7 @@ def SMTPServer(connection, address, checkingClient):
     mailFrom = connection.recv(1024)
     print "C: " + mailFrom
     gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
+    message[2] = str(gettingFromAddr)
     checkMailFrom = gettingFromAddr.split("@")
 
     try:
@@ -100,6 +105,7 @@ def SMTPServer(connection, address, checkingClient):
     mailTo = connection.recv(1024)
     print "C: " + mailTo
     gettingToAddr = mailTo[mailTo.find("<") + 1:mailTo.find(">")]
+    message[1] = str(gettingToAddr)
     checkMailTo = gettingToAddr.split("@")
 
     try:
@@ -134,6 +140,10 @@ def SMTPServer(connection, address, checkingClient):
     done = False
     contentOfMail = []
 
+    #new
+    placeHolder = 1
+    messageBody = ""
+
     while(not done):
 
         nextLine = connection.recv(1024)
@@ -152,19 +162,34 @@ def SMTPServer(connection, address, checkingClient):
                 print "S: 221 Bye"
                 connection.close()
                 print "message transaction complete"
+                #new - make sure to strip right newlines as they come in on client!
+                message[4] = messageBody
+
 
             done = True
 
         else:
 
-            contentOfMail.append(nextLine + "\n")
+            contentOfMail.append(nextLine)
+
+            if(nextLine[:9] == "Subject: "):
+
+                subjectTest = nextLine.split("Subject: ")
+                message[3] = subjectTest[1]
+
+            #new stuff
+            if(placeHolder > 4 and nextLine != "."):
+
+                messageBody += nextLine + "\n"
+
+            placeHolder += 1
 
 
-    threading.Thread(target = MailMan, args = (mailFrom, mailTo, checkMailTo, contentOfMail)).start()
+    threading.Thread(target = MailMan, args = (mailFrom, mailTo, checkMailTo, contentOfMail, message)).start()
 
 
 
-def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
+def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
     if(socket.gethostbyname(checkMailTo[1]) != socket.gethostbyname(socket.gethostname())):
 
@@ -204,6 +229,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
 
         s.sendall("HELO " + socket.getfqdn())
+        time.sleep(0.5)
         print "C: HELO " + socket.getfqdn()
 
 
@@ -223,6 +249,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
 
         s.sendall(mailFrom)
+        time.sleep(0.5)
         print "C: " + mailFrom
         mailFromOk = s.recv(1024)
         checkMailFromOk = mailFromOk.split(" ")
@@ -239,6 +266,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
 
         s.sendall(mailTo)
+        time.sleep(0.5)
         print "C: " + mailTo
         mailToOk = s.recv(1024)
         checkMailToOk = mailToOk.split(" ")
@@ -256,6 +284,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
 
         s.sendall("DATA")
+        time.sleep(0.5)
         print "C: DATA"
         readyForData = s.recv(1024)
         checkReadyForData = readyForData.split(" ")
@@ -280,6 +309,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
 
         s.sendall(".")
+        time.sleep(0.5)
         endOfMessage = s.recv(1024)
         checkEndOfMessage = endOfMessage.split(" ")
 
@@ -296,6 +326,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
 
         s.sendall("QUIT")
+        time.sleep(0.5)
         print "C: QUIT"
 
 
@@ -325,10 +356,16 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail):
 
         for eachLine in contentOfMail:
 
-            writingMessage.write(eachLine)
+            #added this for our benifit of reading mail
+            writingMessage.write(eachLine + "\n")
 
 
-    writingMessage.close()
+        writingMessage.close()
+
+        writingToInbox = open(checkMailTo[0] + "-inbox.txt", "a")
+        writingToInbox.write(str(inboxMessage) + "\n")
+        writingToInbox.close()
+
     contentOfMail[:] = []
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -369,7 +406,6 @@ def serverConnection():
         conn, addr = relay.accept()
         print "\n" + str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a server)"
         threading.Thread(target = SMTPServer, args = (conn, addr, isClient)).start()
-
 
 
 
