@@ -1,7 +1,14 @@
 from Tkinter import *
 import socket, time
+import ast
 
 #--------------------------------------------------------------------------------------------------------------------
+
+"""
+
+"""
+
+
 
 class SMTP:
 
@@ -17,22 +24,7 @@ class SMTP:
         self.clientName = clientName
 
 
-
-    def isAllowed(self):
-
-        users = ["Peter", "Nick", "Tyler", "Kyle"]
-
-        if(self.clientName in users):
-
-            return True
-
-        else:
-
-            return False
-
-
-
-    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
+    def logIntoServerAndReceiveInbox(self):
 
 
         HOST = socket.gethostbyname(self.serverName)
@@ -41,22 +33,29 @@ class SMTP:
         self.s = s
         self.s.connect((HOST, PORT))
 
-        #start with a username
         s.sendall(self.clientName)
 
-        serverHello = self.s.recv(1024)
-        checkServerHello = serverHello.split(" ")
+        done = False
 
-        if(checkServerHello[0] == "220"):
+        while(not done):
 
-            print "S: " + serverHello
+            InboxOr220 = self.s.recv(1024)
 
-        else:
+            if(InboxOr220[:3] == "220"):
 
-            print "S: " + serverHello
-            self.s.close()
-            return None
+                print "S: " + InboxOr220
+                done = True
 
+            else:
+
+                message = ast.literal_eval(InboxOr220)
+                print "+++++++++++++++++++++++++++++++++++++++"
+                print "--- From: " + message[2] + " | To: " + message[1] + " | Subject: " + message[3] + \
+                      " | Date: " + message[0] + " ---"
+                print message[4]
+                print "+++++++++++++++++++++++++++++++++++++++"
+
+    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
 
 
         self.s.sendall("HELO " + self.clientName)
@@ -148,7 +147,7 @@ class SMTP:
 
 
 
-        self.s.sendall("Subject: " + messageSubject + "\n")
+        self.s.sendall("Subject: " + messageSubject)
         print "C: Subject: " + messageSubject
         time.sleep(0.5)
 
@@ -198,7 +197,7 @@ class SMTP:
 
 #--------------------------------------------------------------------------------------------------------------------
 
-def sendingMessage(testing):
+def sendingMessage(SMTP):
 
     def clicked():
 
@@ -228,13 +227,13 @@ def sendingMessage(testing):
                 lineOfText += character
 
 
-        testing.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
+        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
 
 
 
     def logOut():
 
-        message.destroy
+        message.destroy()
 
 
     message = Tk()
@@ -275,10 +274,11 @@ def clicked():
     serverID = serverText.get()
     username = userText.get()
 
-    test = SMTP(serverID, username)
+    SMTPconnection = SMTP(serverID, username)
+    SMTPconnection.logIntoServerAndReceiveInbox()
 
     loginWindow.destroy()
-    sendingMessage(test)
+    sendingMessage(SMTPconnection)
 
 
 loginWindow = Tk()
