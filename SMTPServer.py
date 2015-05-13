@@ -85,9 +85,8 @@ def SMTPServer(connection, address, checkingClient):
     mailFrom = connection.recv(1024)
     print "C: " + mailFrom
     gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
-    message[2] = str(gettingFromAddr)
+    message[2] = str(mailFrom)
     checkMailFrom = gettingFromAddr.split("@")
-    print checkMailFrom
 
     try:
 
@@ -107,7 +106,7 @@ def SMTPServer(connection, address, checkingClient):
     mailTo = connection.recv(1024)
     print "C: " + mailTo
     gettingToAddr = mailTo[mailTo.find("<") + 1:mailTo.find(">")]
-    message[1] = str(gettingToAddr)
+    message[1] = str(mailTo)
     checkMailTo = gettingToAddr.split("@")
 
     try:
@@ -235,7 +234,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall("HELO " + socket.getfqdn())
         time.sleep(0.5)
-        print "C: HELO " + socket.getfqdn()
+        print "C(me): HELO " + socket.getfqdn()
 
 
         serverConfirm = s.recv(1024)
@@ -255,7 +254,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall(mailFrom)
         time.sleep(0.5)
-        print "C: " + mailFrom
+        print "C(me): " + mailFrom
         mailFromOk = s.recv(1024)
         checkMailFromOk = mailFromOk.split(" ")
 
@@ -272,7 +271,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall(mailTo)
         time.sleep(0.5)
-        print "C: " + mailTo
+        print "C(me): " + mailTo
         mailToOk = s.recv(1024)
         checkMailToOk = mailToOk.split(" ")
 
@@ -290,7 +289,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall("DATA")
         time.sleep(0.5)
-        print "C: DATA"
+        print "C(me): DATA"
         readyForData = s.recv(1024)
         checkReadyForData = readyForData.split(" ")
 
@@ -309,7 +308,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
             s.sendall(eachLine)
             time.sleep(0.5)
-            print "C: " + eachLine
+            print "C(me): " + eachLine
 
 
 
@@ -332,7 +331,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall("QUIT")
         time.sleep(0.5)
-        print "C: QUIT"
+        print "C(me): QUIT"
 
 
         byeBye = s.recv(1024)

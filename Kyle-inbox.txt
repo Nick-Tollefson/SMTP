@@ -1,2 +1,0 @@
-
-['Mon, 11 May 2015 13:56:28', 'Kyle@LUCY09', 'Peter@LUCY09', 'test', 'this is a test \n \nYour friend,\n \nPeter\n']

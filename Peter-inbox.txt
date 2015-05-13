@@ -1,6 +1,5 @@
-
-['Mon, 11 May 2015 13:58:06', 'Peter@LUCY09', 'admin@LUCY11', 'Testing yo server', 'body']
-['Mon, 11 May 2015 14:26:06', 'Peter@LUCY09', 'freddie@LUCY09', 'Test Message', 'Hello earthlings\n']
-['Mon, 11 May 2015 14:50:12', 'Peter@LUCY09', 'admin@LUCY11', 'subject', '']
-['Mon, 11 May 2015 15:26:45', 'Peter@LUCY09', 'Peter@LUCY09', 'hi\n', 'how ya doing\n\n']
-['Mon, 11 May 2015 15:47:47', 'Peter@LUCY09', 'Peter@LUCY09', 'Test\n', 'Test\n']
+['Wed, 13 May 2015 13:04:02', 'Peter@PIGPEN30', 'Jason@PIGPEN25', 'Hi\n', '']
+['Wed, 13 May 2015 13:06:17', 'Peter@PIGPEN30', 'Jason@PIGPEN26', 'helllo test', '']
+['Wed, 13 May 2015 13:19:06', 'Peter@PIGPEN30', 'Jason@PIGPEN26', 'sdajfsdafsadjfdj', '']
+['Wed, 13 May 2015 13:20:27', 'Peter@PIGPEN30', 'Jason@PIGPEN26', 'sub7', '']
+['Wed, 13 May 2015 13:23:35', 'Peter@PIGPEN30', 'Jason@PIGPEN25', 'hi\n', '']
