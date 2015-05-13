@@ -3,13 +3,6 @@ import socket, time
 import ast
 
 #--------------------------------------------------------------------------------------------------------------------
-
-"""
-
-"""
-
-
-
 class SMTP:
 
 
@@ -22,6 +15,7 @@ class SMTP:
 
         self.serverName = serverName
         self.clientName = clientName
+
 
 
     def logIntoServerAndReceiveInbox(self):
@@ -43,20 +37,26 @@ class SMTP:
 
             if(InboxOr220[:3] == "220"):
 
-                print "S: " + InboxOr220
+                print "\nS: " + InboxOr220
                 done = True
 
             else:
 
                 message = ast.literal_eval(InboxOr220)
-                print message
-                print "+++++++++++++++++++++++++++++++++++++++"
-                print "--- From: " + message[2] + " | To: " + message[1] + " | Subject: " + message[3] + \
-                      " | Date: " + message[0] + " ---"
-                print message[4]
-                print "+++++++++++++++++++++++++++++++++++++++"
+                print "\n\n"
+                print str(message)
 
-    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
+                if(message[5] == True):
+
+                    message[4] = self.decryption(message[4])
+                    message[3] = self.decryption(message[3])
+
+                print "--- " + message[2] +  " | " + message[1] + " | " + message[3] + \
+                      " | Date: " + message[0] + " | Encryption: " + str(message[5]) + " ---"
+                print message[4]
+
+
+    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList, isEncrypted):
 
 
         self.s.sendall("HELO " + self.clientName)
@@ -128,41 +128,66 @@ class SMTP:
             return None
 
 
-
-        self.s.sendall('From: "' + self.clientName + '" <' + messageSource + ">")
-        print 'C: From: "' + self.clientName + '" <' + messageSource + ">"
-        time.sleep(0.5)
+#----------------------------------------------------------------------------------------------------------
+        if(isEncrypted == True):
 
 
-
-        name = messageDestination.split("@")
-        self.s.sendall('To: "' + name[0] + '" <' + messageDestination + ">")
-        print 'C: To: "' + name[0] + '" <' + messageDestination + ">"
-        time.sleep(0.5)
-
-
-
-        self.s.sendall("Date: " + str(time.strftime("%a, %d %b %Y %X")))
-        print "C: Date: " + str(time.strftime("%a, %d %b %Y %X"))
-        time.sleep(0.5)
-
-
-
-        self.s.sendall("Subject: " + messageSubject)
-        print "C: Subject: " + messageSubject
-        time.sleep(0.5)
-
-
-
-        for eachLine in messageBodyList:
-
-            self.s.sendall(eachLine)
+            self.s.sendall(self.encryption('From: "' + self.clientName + '" <' + messageSource + ">"))
+            print "C: " + self.encryption('From: "' + self.clientName + '" <' + messageSource + ">")
             time.sleep(0.5)
-            print "C: " + eachLine
+
+            name = messageDestination.split("@")
+            self.s.sendall(self.encryption('To: "' + name[0] + '" <' + messageDestination + ">"))
+            print "C: " + self.encryption('To: "' + name[0] + '" <' + messageDestination + ">")
+            time.sleep(0.5)
+
+            self.s.sendall(self.encryption("Date: " + str(time.strftime("%a, %d %b %Y %X"))))
+            print "C: " + self.encryption("Date: " + str(time.strftime("%a, %d %b %Y %X")))
+            time.sleep(0.5)
+
+            self.s.sendall(self.encryption("Subject: " + messageSubject))
+            print "C: " + self.encryption("Subject: " + messageSubject)
+            time.sleep(0.5)
+
+            for eachLine in messageBodyList:
+
+                self.s.sendall(self.encryption(eachLine))
+                time.sleep(0.5)
+                print "C: " + self.encryption(eachLine)
+
+            self.s.sendall(".E")
+            print "C: .E"
 
 
+        elif(isEncrypted == False):
 
-        self.s.sendall(".")
+            self.s.sendall('From: "' + self.clientName + '" <' + messageSource + ">")
+            print 'C: From: "' + self.clientName + '" <' + messageSource + ">"
+            time.sleep(0.5)
+
+            name = messageDestination.split("@")
+            self.s.sendall('To: "' + name[0] + '" <' + messageDestination + ">")
+            print 'C: To: "' + name[0] + '" <' + messageDestination + ">"
+            time.sleep(0.5)
+
+            self.s.sendall("Date: " + str(time.strftime("%a, %d %b %Y %X")))
+            print "C: Date: " + str(time.strftime("%a, %d %b %Y %X"))
+            time.sleep(0.5)
+
+            self.s.sendall("Subject: " + messageSubject)
+            print "C: Subject: " + messageSubject
+            time.sleep(0.5)
+
+            for eachLine in messageBodyList:
+
+                self.s.sendall(eachLine)
+                time.sleep(0.5)
+                print "C: " + eachLine
+
+            self.s.sendall(".")
+            print "C: ."
+#---------------------------------------------------------
+
         endOfMessage = self.s.recv(1024)
         checkEndOfMessage = endOfMessage.split(" ")
 
@@ -177,10 +202,8 @@ class SMTP:
             return None
 
 
-
         self.s.sendall("QUIT")
         print "C: QUIT"
-
 
 
         byeBye = self.s.recv(1024)
@@ -196,6 +219,60 @@ class SMTP:
             print "S: " + byeBye
             self.s.close()
 
+
+    def encryption(self, line, off_set = 1):
+
+        finalMessage = ""
+
+        for eachline in line:
+
+            for eachChar in eachline:
+
+                decimalValue = ord(eachChar)
+
+                newValue = decimalValue - 32
+
+                step4 = newValue + off_set
+
+                if(step4 > 95):
+
+                    step4 -= 95
+
+                finalValue = step4 + 32
+                finalMessage += chr(finalValue)
+
+        return finalMessage
+
+
+    def decryption(self, line, off_set = 1):
+
+        finalDecryptedValue = ""
+
+        for eachline in line:
+
+            for eachChar in eachline:
+
+                if(ord(eachChar) == 10):
+
+                   finalDecryptedValue += eachChar
+
+                else:
+
+                    newDecimalValue = ord(eachChar)
+
+                    newNewValue = newDecimalValue - 32
+
+                    KeyOutput = newNewValue - off_set
+
+                    if(KeyOutput < 0):
+
+                        KeyOutput += 95
+
+                    KeyOutput += 32
+
+                    finalDecryptedValue += chr(KeyOutput)
+
+        return finalDecryptedValue
 #--------------------------------------------------------------------------------------------------------------------
 
 def sendingMessage(SMTP):
@@ -204,10 +281,11 @@ def sendingMessage(SMTP):
 
         toID = toText.get()
         subjectID = subjectText.get()
+
         textMessage = textBox.get(1.0, 'end')
 
         lineOfText = ""
-        bodyOfMessage = []
+        bodyOfMessage = [] #what needs to be encrypted
 
         for character in textMessage:
 
@@ -228,28 +306,62 @@ def sendingMessage(SMTP):
                 lineOfText += character
 
 
-        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
+        #----------------------------------------------
+        isEncrypted = False
+
+        if(flag.get() == 1):
+
+            print "send encrypted"
+
+            isEncrypted = True
+
+
+        elif(flag.get() == 0):
+
+            print "send not encrypted"
+
+            isEncrypted = False
+        #----------------------------------------------
+
+
+
+        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage, isEncrypted)
 
 
 
     def logOut():
 
+        #you were just missing the () Kyle :)
         message.destroy()
+
+
+    def testing():
+
+        test.destroy
 
 
     message = Tk()
     message.title("Compose Message")
 
-    toLabel = Label(master=message, padx = 30, pady = 10, text="To: ")
+#-----------------------------
+    test = Tk()
+    test.title("HAAW")
+#-----------------------------
+
+
+    fromLabel = Label(message, padx = 30, pady = 10, text="From: " + username + "@" + serverID)
+    fromLabel.pack()
+
+    toLabel = Label(message, padx = 30, pady = 10, text = "To: ")
     toLabel.pack()
 
-    toText = Entry(master=message)
+    toText = Entry(message)
     toText.pack()
 
-    subjectLabel = Label(master=message, padx = 30, pady = 10, text="Subject: ")
+    subjectLabel = Label(message, padx = 30, pady = 10, text = "Subject: ")
     subjectLabel.pack()
 
-    subjectText = Entry(master=message)
+    subjectText = Entry(message)
     subjectText.pack()
 
     scrollBar = Scrollbar(message)
@@ -258,11 +370,30 @@ def sendingMessage(SMTP):
     textBox.pack()
     scrollBar.config(command=textBox.yview)
 
+
+#----------------------------------------------------- new encryption stuff
+    flag = IntVar()
+
+    encrypted = Radiobutton(message, text = "Encrypted", variable = flag, value = 1)
+    encrypted.pack()
+
+    notEncrypted = Radiobutton(message, text = "Not Encrypted", variable = flag, value = 0)
+    notEncrypted.pack()
+#-----------------------------------------------------
+
+
     sendButton = Button(master=message, text="Send", command=clicked)
     sendButton.pack()
 
     logOutButton = Button(master=message, text="Logout", command=logOut)
     logOutButton.pack()
+
+
+#-----------------------------
+    exitInboxButton = Button(test, text = "Closes just this window, not whole program", command = testing)
+    exitInboxButton.pack()
+
+#-----------------------------
 
     message.mainloop()
 
