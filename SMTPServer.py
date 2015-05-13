@@ -1,5 +1,5 @@
 import socket, os, threading, time, calendar
-#decrypt subject and body
+#decyrpt subject and body
 
 print "----SMTP SERVER ONLINE | FQDN: " + socket.getfqdn() + "----"
 
@@ -7,7 +7,7 @@ def SMTPServer(connection, address, checkingClient):
 
 
     users = ["Peter", "Nick", "Tyler", "Kyle"]
-    message = ["time","to","from","subject","body"]
+    message = ["time","to","from","subject","body","EncryptionFlag"]
 
     if(checkingClient == True):
 
@@ -24,11 +24,11 @@ def SMTPServer(connection, address, checkingClient):
 
             for eachLine in readingInbox:
 
-                #fucking sleeping fixes everything guys
                 connection.sendall(str(eachLine.strip()))
                 time.sleep(0.5)
 
             readingInbox.close()
+
 
         else:
 
@@ -37,6 +37,7 @@ def SMTPServer(connection, address, checkingClient):
             print "S: 535 Authentication Cred. Invalid"
             connection.close()
             return None
+
 
     else:
 
@@ -136,6 +137,8 @@ def SMTPServer(connection, address, checkingClient):
 
         connection.sendall("500 Command Syntax Error - Expecting DATA")
         print "S: 500 Command Syntax Error - Expecting DATA"
+        connection.close()
+        return None
 
 
     done = False
@@ -150,25 +153,37 @@ def SMTPServer(connection, address, checkingClient):
         nextLine = connection.recv(1024)
         print "C: " + str(nextLine)
 
-        if(nextLine == "."):
+        if(nextLine == "." or nextLine == ".E"):
 
             connection.sendall("250 Ok: queued as 12345")
             print "S: 250 Ok: queued as 12345"
 
             ending = connection.recv(1024)
             print "C: " + ending
+
             if(ending == "QUIT"):
 
                 connection.sendall("221 Bye")
                 print "S: 221 Bye"
+
                 connection.close()
+
                 print "message transaction complete"
                 #new - make sure to strip right newlines as they come in on client!
-                message[4] = messageBody
+                message[4] = messageBody.rstrip()
+
+                if(nextLine == "."):
+
+                    message[5] = False
+
+                elif(nextLine == ".E"):
+
+                    message[5] = True
+
 
             else:
 
-                connection.sendall("500")
+                connection.sendall("500 Command Syntax Error - Expecting QUIT")
 
             done = True
 
@@ -176,14 +191,14 @@ def SMTPServer(connection, address, checkingClient):
 
             contentOfMail.append(nextLine)
 
-            if(nextLine[:9] == "Subject: "):
+            if(placeHolder == 4):
 
-                subjectTest = nextLine.split("Subject: ")
-                message[3] = subjectTest[1]
+                message[3] = nextLine
 
             #new stuff
             if(placeHolder > 4 and nextLine != "."):
 
+                #ord = 10, skip
                 messageBody += nextLine + "\n"
 
             placeHolder += 1
@@ -213,6 +228,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
         HOST = socket.gethostbyname(checkMailTo[1])
         PORT = 44444
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #what is this?
         s = s
         s.connect((HOST, PORT))
 
@@ -234,7 +250,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall("HELO " + socket.getfqdn())
         time.sleep(0.5)
-        print "C(me): HELO " + socket.getfqdn()
+        print "C: HELO " + socket.getfqdn()
 
 
         serverConfirm = s.recv(1024)
@@ -254,7 +270,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall(mailFrom)
         time.sleep(0.5)
-        print "C(me): " + mailFrom
+        print "C: " + mailFrom
         mailFromOk = s.recv(1024)
         checkMailFromOk = mailFromOk.split(" ")
 
@@ -271,7 +287,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall(mailTo)
         time.sleep(0.5)
-        print "C(me): " + mailTo
+        print "C: " + mailTo
         mailToOk = s.recv(1024)
         checkMailToOk = mailToOk.split(" ")
 
@@ -289,7 +305,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall("DATA")
         time.sleep(0.5)
-        print "C(me): DATA"
+        print "C: DATA"
         readyForData = s.recv(1024)
         checkReadyForData = readyForData.split(" ")
 
@@ -308,7 +324,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
             s.sendall(eachLine)
             time.sleep(0.5)
-            print "C(me): " + eachLine
+            print "C: " + eachLine
 
 
 
@@ -331,7 +347,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage):
 
         s.sendall("QUIT")
         time.sleep(0.5)
-        print "C(me): QUIT"
+        print "C: QUIT"
 
 
         byeBye = s.recv(1024)
