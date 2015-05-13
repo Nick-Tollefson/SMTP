@@ -3,13 +3,6 @@ import socket, time
 import ast
 
 #--------------------------------------------------------------------------------------------------------------------
-
-"""
-
-"""
-
-
-
 class SMTP:
 
 
@@ -24,6 +17,7 @@ class SMTP:
         self.clientName = clientName
 
 
+
     def logIntoServerAndReceiveInbox(self):
 
 
@@ -36,25 +30,33 @@ class SMTP:
         s.sendall(self.clientName)
 
         done = False
-        post_office = []
+
         while(not done):
 
             InboxOr220 = self.s.recv(1024)
 
-
             if(InboxOr220[:3] == "220"):
 
-                print "S: " + InboxOr220
+                print "\nS: " + InboxOr220
                 done = True
 
             else:
-                InboxOr220 = InboxOr220.split(",")
-                post_office.append(InboxOr220)
-        for line in post_office:
-            print(line)
-        mailbox(post_office)
 
-    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList):
+                message = ast.literal_eval(InboxOr220)
+                print "\n\n"
+                print str(message)
+
+                if(message[5] == True):
+
+                    message[4] = self.decryption(message[4])
+                    message[3] = self.decryption(message[3])
+
+                print "--- " + message[2] +  " | " + message[1] + " | " + message[3] + \
+                      " | Date: " + message[0] + " | Encryption: " + str(message[5]) + " ---"
+                print message[4]
+
+
+    def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList, isEncrypted):
 
 
         self.s.sendall("HELO " + self.clientName)
@@ -126,41 +128,66 @@ class SMTP:
             return None
 
 
-
-        self.s.sendall('From: "' + self.clientName + '" <' + messageSource + ">")
-        print 'C: From: "' + self.clientName + '" <' + messageSource + ">"
-        time.sleep(0.5)
+#----------------------------------------------------------------------------------------------------------
+        if(isEncrypted == True):
 
 
-
-        name = messageDestination.split("@")
-        self.s.sendall('To: "' + name[0] + '" <' + messageDestination + ">")
-        print 'C: To: "' + name[0] + '" <' + messageDestination + ">"
-        time.sleep(0.5)
-
-
-
-        self.s.sendall("Date: " + str(time.strftime("%a, %d %b %Y %X")))
-        print "C: Date: " + str(time.strftime("%a, %d %b %Y %X"))
-        time.sleep(0.5)
-
-
-
-        self.s.sendall("Subject: " + messageSubject)
-        print "C: Subject: " + messageSubject
-        time.sleep(0.5)
-
-
-
-        for eachLine in messageBodyList:
-
-            self.s.sendall(eachLine)
+            self.s.sendall(self.encryption('From: "' + self.clientName + '" <' + messageSource + ">"))
+            print "C: " + self.encryption('From: "' + self.clientName + '" <' + messageSource + ">")
             time.sleep(0.5)
-            print "C: " + eachLine
+
+            name = messageDestination.split("@")
+            self.s.sendall(self.encryption('To: "' + name[0] + '" <' + messageDestination + ">"))
+            print "C: " + self.encryption('To: "' + name[0] + '" <' + messageDestination + ">")
+            time.sleep(0.5)
+
+            self.s.sendall(self.encryption("Date: " + str(time.strftime("%a, %d %b %Y %X"))))
+            print "C: " + self.encryption("Date: " + str(time.strftime("%a, %d %b %Y %X")))
+            time.sleep(0.5)
+
+            self.s.sendall(self.encryption("Subject: " + messageSubject))
+            print "C: " + self.encryption("Subject: " + messageSubject)
+            time.sleep(0.5)
+
+            for eachLine in messageBodyList:
+
+                self.s.sendall(self.encryption(eachLine))
+                time.sleep(0.5)
+                print "C: " + self.encryption(eachLine)
+
+            self.s.sendall(".E")
+            print "C: .E"
 
 
+        elif(isEncrypted == False):
 
-        self.s.sendall(".")
+            self.s.sendall('From: "' + self.clientName + '" <' + messageSource + ">")
+            print 'C: From: "' + self.clientName + '" <' + messageSource + ">"
+            time.sleep(0.5)
+
+            name = messageDestination.split("@")
+            self.s.sendall('To: "' + name[0] + '" <' + messageDestination + ">")
+            print 'C: To: "' + name[0] + '" <' + messageDestination + ">"
+            time.sleep(0.5)
+
+            self.s.sendall("Date: " + str(time.strftime("%a, %d %b %Y %X")))
+            print "C: Date: " + str(time.strftime("%a, %d %b %Y %X"))
+            time.sleep(0.5)
+
+            self.s.sendall("Subject: " + messageSubject)
+            print "C: Subject: " + messageSubject
+            time.sleep(0.5)
+
+            for eachLine in messageBodyList:
+
+                self.s.sendall(eachLine)
+                time.sleep(0.5)
+                print "C: " + eachLine
+
+            self.s.sendall(".")
+            print "C: ."
+#---------------------------------------------------------
+
         endOfMessage = self.s.recv(1024)
         checkEndOfMessage = endOfMessage.split(" ")
 
@@ -175,10 +202,8 @@ class SMTP:
             return None
 
 
-
         self.s.sendall("QUIT")
         print "C: QUIT"
-
 
 
         byeBye = self.s.recv(1024)
@@ -193,81 +218,74 @@ class SMTP:
 
             print "S: " + byeBye
             self.s.close()
+
+
+    def encryption(self, line, off_set = 1):
+
+        finalMessage = ""
+
+        for eachline in line:
+
+            for eachChar in eachline:
+
+                decimalValue = ord(eachChar)
+
+                newValue = decimalValue - 32
+
+                step4 = newValue + off_set
+
+                if(step4 > 95):
+
+                    step4 -= 95
+
+                finalValue = step4 + 32
+                finalMessage += chr(finalValue)
+
+        return finalMessage
+
+
+    def decryption(self, line, off_set = 1):
+
+        finalDecryptedValue = ""
+
+        for eachline in line:
+
+            for eachChar in eachline:
+
+                if(ord(eachChar) == 10):
+
+                   finalDecryptedValue += eachChar
+
+                else:
+
+                    newDecimalValue = ord(eachChar)
+
+                    newNewValue = newDecimalValue - 32
+
+                    KeyOutput = newNewValue - off_set
+
+                    if(KeyOutput < 0):
+
+                        KeyOutput += 95
+
+                    KeyOutput += 32
+
+                    finalDecryptedValue += chr(KeyOutput)
+
+        return finalDecryptedValue
 #--------------------------------------------------------------------------------------------------------------------
 
-def mailbox(post_office):
-    """
-    message = ast.literal_eval(InboxOr220)
-    print message
-    print "+++++++++++++++++++++++++++++++++++++++"
-    print "--- From: " + message[2] + " | To: " + message[1] + " | Subject: " + message[3] + \
-          " | Date: " + message[0] + " ---"
-    print message[4]
-
-    print "+++++++++++++++++++++++++++++++++++++++"
-    """
-    def OnDouble(event):
-        widget = event.widget
-        selection = widget.curselection()
-        T.delete(1.0, 'end')
-        T.insert(END, messagelist[int(selection[0])])
-
-    global messagelist
-    messagelist = []
-
-    win = Tk()
-    win.title("Post Office")
-
-    frame1 = Frame(win)
-    frame1.pack()
-
-    frame3 = Frame(win)
-    frame3.pack()
-    scroll = Scrollbar(frame3, orient=VERTICAL)
-    select = Listbox(frame3, yscrollcommand=scroll.set, height=6,width=70)
-
-    for message in post_office:
-        print(message[1])
-        select.insert(END, "From: " + '{:<20}'.format(message[2]) + " | To: " + '{:<20}'.format(message[1]) + " | Subject: " + message[3])
-        messagelist.append(message[4])
-    select.bind("<Double-Button-1>", OnDouble)
-    scroll.config(command=select.yview)
-    scroll.pack(side=RIGHT, fill=Y)
-    select.pack(side=LEFT,  fill=BOTH, expand=1)
-
-
-    frame4 = Frame(win)
-    S = Scrollbar(frame4)
-    T = Text(frame4, height=15, width=70)
-    S.pack(side=RIGHT, fill=Y)
-    T.pack(side=LEFT, fill=Y)
-    S.config(command=T.yview)
-    T.config(yscrollcommand=S.set)
-    quote = """HAMLET: To be, or not to be--that is the question: Whether 'tis nobler in the mind to suffer
-    The slings and arrows of outrageous fortune
-    Or to take arms against a sea of troubles
-    And by opposing end them. To die, to sleep--
-    No more--and by a sleep to say we end
-    The heartache, and the thousand natural shocks
-    That flesh is heir to. 'Tis a consummation
-    Devoutly to be wished."""
-    T.insert(END, quote)
-    frame4.pack()
-
-
-    win.mainloop()
-
-#--------------------------------------------------------------------------------------------------------------------
 def sendingMessage(SMTP):
 
     def clicked():
 
         toID = toText.get()
         subjectID = subjectText.get()
+
         textMessage = textBox.get(1.0, 'end')
 
         lineOfText = ""
-        bodyOfMessage = []
+        bodyOfMessage = [] #what needs to be encrypted
 
         for character in textMessage:
 
@@ -288,28 +306,62 @@ def sendingMessage(SMTP):
                 lineOfText += character
 
 
-        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
+        #----------------------------------------------
+        isEncrypted = False
+
+        if(flag.get() == 1):
+
+            print "send encrypted"
+
+            isEncrypted = True
+
+
+        elif(flag.get() == 0):
+
+            print "send not encrypted"
+
+            isEncrypted = False
+        #----------------------------------------------
+
+
+
+        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage, isEncrypted)
 
 
 
     def logOut():
 
+        #you were just missing the () Kyle :)
         message.destroy()
+
+
+    def testing():
+
+        test.destroy
 
 
     message = Tk()
     message.title("Compose Message")
 
-    toLabel = Label(master=message, padx = 30, pady = 10, text="To: ")
+#-----------------------------
+    test = Tk()
+    test.title("HAAW")
+#-----------------------------
+
+
+    fromLabel = Label(message, padx = 30, pady = 10, text="From: " + username + "@" + serverID)
+    fromLabel.pack()
+
+    toLabel = Label(message, padx = 30, pady = 10, text = "To: ")
     toLabel.pack()
 
-    toText = Entry(master=message)
+    toText = Entry(message)
     toText.pack()
 
-    subjectLabel = Label(master=message, padx = 30, pady = 10, text="Subject: ")
+    subjectLabel = Label(message, padx = 30, pady = 10, text = "Subject: ")
     subjectLabel.pack()
 
-    subjectText = Entry(master=message)
+    subjectText = Entry(message)
     subjectText.pack()
 
     scrollBar = Scrollbar(message)
@@ -318,121 +370,30 @@ def sendingMessage(SMTP):
     textBox.pack()
     scrollBar.config(command=textBox.yview)
 
+
+#----------------------------------------------------- new encryption stuff
+    flag = IntVar()
+
+    encrypted = Radiobutton(message, text = "Encrypted", variable = flag, value = 1)
+    encrypted.pack()
+
+    notEncrypted = Radiobutton(message, text = "Not Encrypted", variable = flag, value = 0)
+    notEncrypted.pack()
+#-----------------------------------------------------
+
+
     sendButton = Button(master=message, text="Send", command=clicked)
     sendButton.pack()
 
     logOutButton = Button(master=message, text="Logout", command=logOut)
     logOutButton.pack()
 
-    message.mainloop()
 
-#--------------------------------------------------------------------------------------------------------------------
-def clicked():
+#-----------------------------
+    exitInboxButton = Button(test, text = "Closes just this window, not whole program", command = testing)
+    exitInboxButton.pack()
 
-    global username
-    global serverID
-    serverID = serverText.get()
-    username = userText.get()
-
-    SMTPconnection = SMTP(serverID, username)
-    SMTPconnection.logIntoServerAndReceiveInbox()
-
-    loginWindow.destroy()
-    sendingMessage(SMTPconnection)
-
-
-loginWindow = Tk()
-loginWindow.title("Login")
-
-serverLabel = Label(master=loginWindow, padx = 30, pady = 10, text="Server ID: ")
-serverLabel.pack()
-
-serverText = Entry(master=loginWindow)
-serverText.pack()
-
-userLabel = Label(master=loginWindow, padx = 30, pady = 10, text="Username: ")
-userLabel.pack()
-
-userText = Entry(master=loginWindow)
-userText.pack()
-
-loginButton = Button(master=loginWindow, text="Login", command=clicked)
-loginButton.pack()
-
-loginWindow.minsize(width=300, height=300)
-loginWindow.resizable(width=FALSE, height=FALSE)
-
-loginWindow.mainloop()
-
-
-
-#--------------------------------------------------------------------------------------------------------------------
-
-def sendingMessage(SMTP):
-
-    def clicked():
-
-        toID = toText.get()
-        subjectID = subjectText.get()
-        textMessage = textBox.get(1.0, 'end')
-
-        lineOfText = ""
-        bodyOfMessage = []
-
-        for character in textMessage:
-
-            if(character == "\n"):
-
-                if(lineOfText == ""):
-
-                    bodyOfMessage.append(" ")
-
-                else:
-
-                    bodyOfMessage.append(lineOfText)
-
-                lineOfText = ""
-
-            else:
-
-                lineOfText += character
-
-
-        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage)
-
-
-
-    def logOut():
-
-        message.destroy()
-
-
-    message = Tk()
-    message.title("Compose Message")
-
-    toLabel = Label(master=message, padx = 30, pady = 10, text="To: ")
-    toLabel.pack()
-
-    toText = Entry(master=message)
-    toText.pack()
-
-    subjectLabel = Label(master=message, padx = 30, pady = 10, text="Subject: ")
-    subjectLabel.pack()
-
-    subjectText = Entry(master=message)
-    subjectText.pack()
-
-    scrollBar = Scrollbar(message)
-    textBox = Text(message, height=20, width=40)
-    scrollBar.pack(side=RIGHT, fill=Y)
-    textBox.pack()
-    scrollBar.config(command=textBox.yview)
-
-    sendButton = Button(master=message, text="Send", command=clicked)
-    sendButton.pack()
-
-    logOutButton = Button(master=message, text="Logout", command=logOut)
-    logOutButton.pack()
+#-----------------------------
 
     message.mainloop()
 
