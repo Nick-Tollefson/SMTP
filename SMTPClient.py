@@ -1,6 +1,7 @@
 from Tkinter import *
 import socket, time
 import ast
+import threading
 
 #--------------------------------------------------------------------------------------------------------------------
 class SMTP:
@@ -30,7 +31,7 @@ class SMTP:
         s.sendall(self.clientName)
 
         done = False
-
+        post_office = []
         while(not done):
 
             InboxOr220 = self.s.recv(1024)
@@ -43,17 +44,14 @@ class SMTP:
             else:
 
                 message = ast.literal_eval(InboxOr220)
-                print "\n\n"
-                print str(message)
 
-                if(message[5] == True):
-
+                if len(message) == 5:
+                    message.append(False)
+                if message[5] is True:
                     message[4] = self.decryption(message[4])
                     message[3] = self.decryption(message[3])
-
-                print "--- " + message[2] +  " | " + message[1] + " | " + message[3] + \
-                      " | Date: " + message[0] + " | Encryption: " + str(message[5]) + " ---"
-                print message[4]
+                post_office.append(message)
+        mailbox(post_office, self)
 
 
     def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList, isEncrypted):
@@ -275,6 +273,51 @@ class SMTP:
         return finalDecryptedValue
 #--------------------------------------------------------------------------------------------------------------------
 
+def mailbox(post_office, smtp):
+    def OnDouble(event):
+        widget = event.widget
+        selection = widget.curselection()
+        T.delete(1.0, 'end')
+        T.insert(END, messagelist[int(selection[0])])
+
+    global messagelist
+    messagelist = []
+
+    win = Toplevel(loginWindow)
+    win.title("Post Office")
+
+    frame1 = Frame(win)
+    frame1.pack()
+
+    frame3 = Frame(win)
+    frame3.pack()
+    scroll = Scrollbar(frame3, orient=VERTICAL)
+    select = Listbox(frame3, yscrollcommand=scroll.set, height=6,width=70)
+
+    for message in post_office:
+        select.insert(END, "Date: " + '{:<20}'.format(message[0]) + " |From: " + '{:<20}'.format(message[2]) + " | Subject: " + message[3])
+        messagelist.append(message[4])
+    select.bind("<Double-Button-1>", OnDouble)
+    scroll.config(command=select.yview)
+    scroll.pack(side=RIGHT, fill=Y)
+    select.pack(side=LEFT,  fill=BOTH, expand=1)
+
+
+    frame4 = Frame(win)
+    S = Scrollbar(frame4)
+    T = Text(frame4, height=15, width=70)
+    S.pack(side=RIGHT, fill=Y)
+    T.pack(side=LEFT, fill=Y)
+    S.config(command=T.yview)
+    T.config(yscrollcommand=S.set)
+    T.insert(END, "")
+    frame4.pack()
+
+    win.after(sendingMessage(smtp))
+    win.mainloop()
+
+#--------------------------------------------------------------------------------------------------------------------
+
 def sendingMessage(SMTP):
 
     def clicked():
@@ -327,27 +370,14 @@ def sendingMessage(SMTP):
 
         SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage, isEncrypted)
 
-
-
     def logOut():
 
         #you were just missing the () Kyle :)
         message.destroy()
 
 
-    def testing():
-
-        test.destroy
-
-
     message = Tk()
     message.title("Compose Message")
-
-#-----------------------------
-    test = Tk()
-    test.title("HAAW")
-#-----------------------------
-
 
     fromLabel = Label(message, padx = 30, pady = 10, text="From: " + username + "@" + serverID)
     fromLabel.pack()
@@ -388,13 +418,6 @@ def sendingMessage(SMTP):
     logOutButton = Button(master=message, text="Logout", command=logOut)
     logOutButton.pack()
 
-
-#-----------------------------
-    exitInboxButton = Button(test, text = "Closes just this window, not whole program", command = testing)
-    exitInboxButton.pack()
-
-#-----------------------------
-
     message.mainloop()
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -410,7 +433,6 @@ def clicked():
     SMTPconnection.logIntoServerAndReceiveInbox()
 
     loginWindow.destroy()
-    sendingMessage(SMTPconnection)
 
 
 loginWindow = Tk()
