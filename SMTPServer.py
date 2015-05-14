@@ -203,7 +203,7 @@ def SMTPServer(connection, address, checkingClient):
 
             elif(placeHolder == 3):
 
-                message[0] = nextLine[5:]
+                message[0] = nextLine[6:]
 
             messageBody += nextLine + "\n"
 
