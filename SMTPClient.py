@@ -1,26 +1,27 @@
+"""
+Course: ISTE 101 - Computer Problem Solving in the Network Domain II
+Project: Final Project - SMTP Client
+Description: The SMTP Client which can connect to any SMTP Server within the course and send it an e-mail.
+Authors: Tyler, Nick, Kyle, and Peter
+Date: 05/14/2015
+"""
+
 from Tkinter import *
 import socket, time
 import ast
-import threading
 
-#--------------------------------------------------------------------------------------------------------------------
 class SMTP:
-
 
     serverName = ""
     clientName = ""
     s = ""
-
 
     def __init__(self, serverName, clientName):
 
         self.serverName = serverName
         self.clientName = clientName
 
-
-
     def logIntoServerAndReceiveInbox(self):
-
 
         HOST = socket.gethostbyname(self.serverName)
         PORT = 33333
@@ -30,8 +31,10 @@ class SMTP:
 
         s.sendall(self.clientName)
 
+
         done = False
         post_office = []
+
         while(not done):
 
             InboxOr220 = self.s.recv(1024)
@@ -46,16 +49,19 @@ class SMTP:
                 message = ast.literal_eval(InboxOr220)
 
                 if len(message) == 5:
+
                     message.append(False)
+
                 if message[5] is True:
+
                     message[4] = self.decryption(message[4])
                     message[3] = self.decryption(message[3])
+
                 post_office.append(message)
+
         mailbox(post_office, self)
 
-
     def sendEmail(self, messageSource, messageDestination, messageSubject, messageBodyList, isEncrypted):
-
 
         self.s.sendall("HELO " + self.clientName)
         print "C: HELO " + self.clientName
@@ -75,7 +81,6 @@ class SMTP:
             return None
 
 
-
         self.s.sendall("MAIL FROM:<" + messageSource + ">")
         print "C: MAIL FROM:<" + messageSource + ">"
         mailFromOk = self.s.recv(1024)
@@ -90,7 +95,6 @@ class SMTP:
             print "S: " + mailFromOk
             self.s.close()
             return None
-
 
 
         self.s.sendall("RCPT TO:<" + messageDestination + ">")
@@ -109,7 +113,6 @@ class SMTP:
             return None
 
 
-
         self.s.sendall("DATA")
         print "C: DATA"
         readyForData = self.s.recv(1024)
@@ -126,9 +129,7 @@ class SMTP:
             return None
 
 
-#----------------------------------------------------------------------------------------------------------
         if(isEncrypted == True):
-
 
             self.s.sendall(self.encryption('From: "' + self.clientName + '" <' + messageSource + ">"))
             print "C: " + self.encryption('From: "' + self.clientName + '" <' + messageSource + ">")
@@ -184,7 +185,7 @@ class SMTP:
 
             self.s.sendall(".")
             print "C: ."
-#---------------------------------------------------------
+
 
         endOfMessage = self.s.recv(1024)
         checkEndOfMessage = endOfMessage.split(" ")
@@ -210,13 +211,14 @@ class SMTP:
         if(checkByeBye[0] == "221"):
 
             print "S: " + byeBye
+            print "[mail was successfully sent to the server]"
             self.s.close()
 
         else:
 
             print "S: " + byeBye
+            print "[mail did not make it to server properly]"
             self.s.close()
-
 
     def encryption(self, line, off_set = 1):
 
@@ -240,7 +242,6 @@ class SMTP:
                 finalMessage += chr(finalValue)
 
         return finalMessage
-
 
     def decryption(self, line, off_set = 1):
 
@@ -271,14 +272,26 @@ class SMTP:
                     finalDecryptedValue += chr(KeyOutput)
 
         return finalDecryptedValue
+
+
 #--------------------------------------------------------------------------------------------------------------------
 
+
+
 def mailbox(post_office, smtp):
+
     def OnDouble(event):
+
         widget = event.widget
+
         selection = widget.curselection()
+
         T.delete(1.0, 'end')
         T.insert(END, messagelist[int(selection[0])])
+
+    def closing():
+        win.destroy()
+
 
     global messagelist
     messagelist = []
@@ -291,44 +304,71 @@ def mailbox(post_office, smtp):
 
     frame3 = Frame(win)
     frame3.pack()
+
     scroll = Scrollbar(frame3, orient=VERTICAL)
+
     select = Listbox(frame3, yscrollcommand=scroll.set, height=6,width=70)
 
+
     for message in post_office:
-        select.insert(END, "Date: " + '{:<20}'.format(message[0]) + " |From: " + '{:<20}'.format(message[2]) + " | Subject: " + message[3])
+
+        select.insert(END," | Subject: " + message[3] +  " |From: " + '{:<20}'.format(message[2]) + \
+                      "Date: " + '{:<20}'.format(message[0]))
         messagelist.append(message[4])
+
+
     select.bind("<Double-Button-1>", OnDouble)
     scroll.config(command=select.yview)
+
     scroll.pack(side=RIGHT, fill=Y)
     select.pack(side=LEFT,  fill=BOTH, expand=1)
 
-
     frame4 = Frame(win)
+
     S = Scrollbar(frame4)
-    T = Text(frame4, height=15, width=70)
-    S.pack(side=RIGHT, fill=Y)
-    T.pack(side=LEFT, fill=Y)
-    S.config(command=T.yview)
-    T.config(yscrollcommand=S.set)
+    T = Text(frame4, height = 15, width = 70)
+
+    S.pack(side = RIGHT, fill = Y)
+    T.pack(side = LEFT, fill = Y)
+
+    S.config(command = T.yview)
+    T.config(yscrollcommand = S.set)
+
     T.insert(END, "")
+
     frame4.pack()
 
+    testingButton = Button(win, text="Logout", command = closing)
+    testingButton.pack()
+
     win.after(sendingMessage(smtp))
+
     win.mainloop()
+
+
 
 #--------------------------------------------------------------------------------------------------------------------
 
+
+
 def sendingMessage(SMTP):
 
-    def clicked():
+    def sendEncrypted():
+        sendEmail(True)
+
+    def sendUnencrypted():
+        sendEmail(False)
+
+    def sendEmail(isEncrypted):
 
         toID = toText.get()
         subjectID = subjectText.get()
-
+        fromID = username + "@" + serverID
         textMessage = textBox.get(1.0, 'end')
 
+
         lineOfText = ""
-        bodyOfMessage = [] #what needs to be encrypted
+        bodyOfMessage = []
 
         for character in textMessage:
 
@@ -348,114 +388,83 @@ def sendingMessage(SMTP):
 
                 lineOfText += character
 
-
-        #----------------------------------------------
-        isEncrypted = False
-
-        if(flag.get() == 1):
-
-            print "send encrypted"
-
-            isEncrypted = True
-
-
-        elif(flag.get() == 0):
-
-            print "send not encrypted"
-
-            isEncrypted = False
-        #----------------------------------------------
-
-
-
-        SMTP.sendEmail(username + "@" + serverID, toID, subjectID, bodyOfMessage, isEncrypted)
+        SMTP.sendEmail(fromID, toID, subjectID, bodyOfMessage, isEncrypted)
 
     def logOut():
-
-        #you were just missing the () Kyle :)
         message.destroy()
 
 
     message = Tk()
     message.title("Compose Message")
 
-    fromLabel = Label(message, padx = 30, pady = 10, text="From: " + username + "@" + serverID)
-    fromLabel.pack()
-
+    fromLabel = Label(message, padx = 30, pady = 10, text = "From: " + username + "@" + serverID)
     toLabel = Label(message, padx = 30, pady = 10, text = "To: ")
-    toLabel.pack()
-
     toText = Entry(message)
-    toText.pack()
-
     subjectLabel = Label(message, padx = 30, pady = 10, text = "Subject: ")
-    subjectLabel.pack()
-
     subjectText = Entry(message)
-    subjectText.pack()
-
     scrollBar = Scrollbar(message)
-    textBox = Text(message, height=20, width=40)
-    scrollBar.pack(side=RIGHT, fill=Y)
+    textBox = Text(message, height = 20, width = 40)
+    encryptButton = Button(message, text = "Send Encrypted", command = sendEncrypted)
+    dontEncryptButton = Button(message, text = "Send Without Encryption", command = sendUnencrypted)
+    logOutButton = Button(message, text = "Logout", command = logOut)
+
+    fromLabel.pack()
+    toLabel.pack()
+    toText.pack()
+    subjectLabel.pack()
+    subjectText.pack()
+    scrollBar.pack(side = RIGHT, fill = Y)
     textBox.pack()
-    scrollBar.config(command=textBox.yview)
-
-
-#----------------------------------------------------- new encryption stuff
-    flag = IntVar()
-
-    encrypted = Radiobutton(message, text = "Encrypted", variable = flag, value = 1)
-    encrypted.pack()
-
-    notEncrypted = Radiobutton(message, text = "Not Encrypted", variable = flag, value = 0)
-    notEncrypted.pack()
-#-----------------------------------------------------
-
-
-    sendButton = Button(master=message, text="Send", command=clicked)
-    sendButton.pack()
-
-    logOutButton = Button(master=message, text="Logout", command=logOut)
+    scrollBar.config(command = textBox.yview)
+    encryptButton.pack()
+    dontEncryptButton.pack()
     logOutButton.pack()
 
     message.mainloop()
 
+
+
 #--------------------------------------------------------------------------------------------------------------------
 
-def clicked():
+
+
+def ConnectToServer():
 
     global username
     global serverID
+
     serverID = serverText.get()
     username = userText.get()
 
     SMTPconnection = SMTP(serverID, username)
-    SMTPconnection.logIntoServerAndReceiveInbox()
 
-    loginWindow.destroy()
+    try:
+
+        SMTPconnection.logIntoServerAndReceiveInbox()
+        loginWindow.destroy()
+
+    except TclError:
+
+        pass
+
 
 
 loginWindow = Tk()
 loginWindow.title("Login")
 
-serverLabel = Label(master=loginWindow, padx = 30, pady = 10, text="Server ID: ")
+serverLabel = Label(loginWindow, padx = 30, pady = 10, text = "Server ID: ")
+serverText = Entry(loginWindow)
+userLabel = Label(loginWindow, padx = 30, pady = 10, text = "Username: ")
+userText = Entry(loginWindow)
+loginButton = Button(loginWindow, text = "Login", command = ConnectToServer)
+
 serverLabel.pack()
-
-serverText = Entry(master=loginWindow)
 serverText.pack()
-
-userLabel = Label(master=loginWindow, padx = 30, pady = 10, text="Username: ")
 userLabel.pack()
-
-userText = Entry(master=loginWindow)
 userText.pack()
-
-loginButton = Button(master=loginWindow, text="Login", command=clicked)
 loginButton.pack()
 
 loginWindow.minsize(width=300, height=300)
 loginWindow.resizable(width=FALSE, height=FALSE)
 
 loginWindow.mainloop()
-
-#--------------------------------------------------------------------------------------------------------------------
