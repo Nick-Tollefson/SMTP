@@ -54,6 +54,7 @@ class SMTP:
 
                 if message[5] is True:
 
+                    message[0] = self.decryption(message[0])
                     message[4] = self.decryption(message[4])
                     message[3] = self.decryption(message[3])
 

@@ -201,6 +201,10 @@ def SMTPServer(connection, address, checkingClient):
 
                 message[3] = nextLine
 
+            elif(placeHolder == 3):
+
+                message[0] = nextLine
+
             elif(placeHolder > 4):
 
                 messageBody += nextLine + "\n"
