@@ -204,7 +204,7 @@ def SMTPServer(connection, address, checkingClient):
             elif(placeHolder == 3):
 
                 message[0] = nextLine
-
+#asdf
             messageBody += nextLine + "\n"
 
             placeHolder += 1
