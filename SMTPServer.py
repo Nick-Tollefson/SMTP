@@ -199,12 +199,12 @@ def SMTPServer(connection, address, checkingClient):
 
             if(placeHolder == 4):
 
-                message[3] = nextLine
+                message[3] = nextLine[9:]
 
             elif(placeHolder == 3):
 
-                message[0] = nextLine
-#asdf
+                message[0] = nextLine[5:]
+
             messageBody += nextLine + "\n"
 
             placeHolder += 1
