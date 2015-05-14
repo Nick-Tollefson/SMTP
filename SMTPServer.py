@@ -91,7 +91,7 @@ def SMTPServer(connection, address, checkingClient):
     mailFrom = connection.recv(1024)
     print "C: " + mailFrom
     gettingFromAddr = mailFrom[mailFrom.find("<") + 1:mailFrom.find(">")]
-    message[2] = str(mailFrom)
+    message[2] = str(gettingFromAddr)
     checkMailFrom = gettingFromAddr.split("@")
 
     try:
@@ -113,7 +113,7 @@ def SMTPServer(connection, address, checkingClient):
     mailTo = connection.recv(1024)
     print "C: " + mailTo
     gettingToAddr = mailTo[mailTo.find("<") + 1:mailTo.find(">")]
-    message[1] = str(mailTo)
+    message[1] = str(gettingToAddr)
     checkMailTo = gettingToAddr.split("@")
 
     try:
@@ -201,7 +201,9 @@ def SMTPServer(connection, address, checkingClient):
 
                 message[3] = nextLine
 
-            messageBody += nextLine + "\n"
+            elif(placeHolder > 4):
+
+                messageBody += nextLine + "\n"
 
             placeHolder += 1
 
