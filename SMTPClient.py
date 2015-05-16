@@ -313,8 +313,8 @@ def mailbox(post_office, smtp):
 
     for message in post_office:
 
-        select.insert(END," | Subject: " + message[3] +  " |From: " + '{:<20}'.format(message[2]) + \
-                      "Date: " + '{:<20}'.format(message[0]))
+        select.insert(END," | Subject: " + message[3] +  " | From: " + '{:<15}'.format(message[2]) + \
+                      "| Date: " + '{:<20}'.format(message[0]))
         messagelist.append(message[4])
 
 
