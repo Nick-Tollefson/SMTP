@@ -1,0 +1,2 @@
+This is usually empty, but it Git needs a file in a directory so here is one! Basically this is used to log every message for clients
+not stored on this server as the server will sees it (i.e encrypted messages are encrypted still and such)
