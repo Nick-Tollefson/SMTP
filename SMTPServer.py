@@ -10,7 +10,7 @@ import socket, os, threading, time, calendar
 
 print "----SMTP SERVER ONLINE | FQDN: " + socket.getfqdn() + "----"
 
-def SMTPServer(connection, address, checkingClient):
+def SMTPServer(connection, address, checkingClient, QNumber):
 
     users = ["Peter", "Nick", "Tyler", "Kyle"]
     message = ["time","to","from","subject","body","EncryptionFlag"]
@@ -149,7 +149,6 @@ def SMTPServer(connection, address, checkingClient):
 
     done = False
     contentOfMail = []
-
     placeHolder = 1
     messageBody = ""
 
@@ -160,8 +159,8 @@ def SMTPServer(connection, address, checkingClient):
 
         if(nextLine == "." or nextLine == ".E"):
 
-            connection.sendall("250 Ok: queued as 12345")
-            print "S: 250 Ok: queued as 12345"
+            connection.sendall("250 Ok: queued as " + str(QNumber))
+            print "S: 250 Ok: queued as " + str(QNumber)
 
             ending = connection.recv(1024)
             print "C: " + ending
@@ -397,6 +396,7 @@ def MailMan(mailFrom, mailTo, checkMailTo, contentOfMail, inboxMessage, checkEnc
 def clientConnection():
 
     print "Now listening for clients..."
+    queueNumber = 0
     isClient = True
     HOST = ''
     PORT = 33333
@@ -410,12 +410,14 @@ def clientConnection():
 
         conn, addr = s.accept()
         print "\n" + str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a client)"
-        threading.Thread(target = SMTPServer, args = (conn, addr, isClient)).start()
+        threading.Thread(target = SMTPServer, args = (conn, addr, isClient, queueNumber)).start()
+        queueNumber += 1
 
 
 def serverConnection():
 
     print "Now listening for relay servers..."
+    queueNumber = 0
     isClient = False
     HOST = ''
     PORT = 44444
@@ -429,7 +431,8 @@ def serverConnection():
 
         conn, addr = relay.accept()
         print "\n" + str(addr[0]) + ":" + str(addr[1]) + " has connected (this is a server)"
-        threading.Thread(target = SMTPServer, args = (conn, addr, isClient)).start()
+        threading.Thread(target = SMTPServer, args = (conn, addr, isClient, queueNumber)).start()
+        queueNumber += 1
 
 
 
